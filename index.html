@@ -268,8 +268,12 @@
         }
 
         async function handleSearch() {
-            const query = document.getElementById('search-input').value;
+            const input = document.getElementById('search-input');
+            const query = input.value;
             if(!query) return;
+
+            // 1. Close the mobile keyboard
+            input.blur(); 
 
             const sidebar = document.getElementById('sidebar');
             sidebar.innerHTML = '<div style="padding:40px; text-align:center; color:#666;">Creating Feed...</div>';
@@ -292,12 +296,25 @@
                 currentVideos = detailsData.items;
                 currentIndex = -1; 
                 renderSidebar();
+
+                // --- THE SCROLL FIX ---
+                if (window.innerWidth <= 900) {
+                    // On Mobile: Scroll down to the list so user sees results
+                    // We use a small timeout to ensure the DOM is ready
+                    setTimeout(() => {
+                        sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                } else {
+                    // On Desktop: Reset sidebar scroll to top
+                    sidebar.scrollTop = 0;
+                }
+
             } catch (error) {
                 console.error(error);
                 sidebar.innerHTML = '<div style="padding:20px; color:red;">Connection Error.</div>';
             }
         }
-
+        
         function renderSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.innerHTML = '';
