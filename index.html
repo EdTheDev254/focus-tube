@@ -309,6 +309,100 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+
+        /* --- MOBILE & TABLET RESPONSIVENESS --- */
+        @media (max-width: 900px) {
+            
+            /* 1. Reset Body Scrolling */
+            body {
+                height: auto; /* Allow page to grow */
+                overflow-y: auto; /* Enable window scrolling */
+            }
+
+            /* 2. Switch Layout to Column (Top-Down) */
+            .container {
+                flex-direction: column;
+                overflow: visible;
+                height: auto;
+            }
+
+            /* 3. Move Player to TOP, Sidebar to BOTTOM */
+            #player-area {
+                order: 1; /* Shows first */
+                width: 100%;
+                overflow: visible;
+                padding-bottom: 20px;
+                min-height: auto;
+            }
+
+            #sidebar {
+                order: 2; /* Shows second */
+                width: 100%;
+                height: auto; /* Let it grow with content */
+                overflow: visible;
+                border-right: none;
+                border-top: 1px solid var(--border);
+            }
+
+            /* 4. Adjust Header for Small Screens */
+            header {
+                padding: 0 15px;
+                position: sticky; /* Keep header stuck to top */
+                top: 0;
+            }
+
+            .logo span {
+                display: none; /* Hide text "FocusTube" on super small screens to save space */
+            }
+            
+            .logo i {
+                font-size: 1.5rem; /* Keep icon visible */
+            }
+
+            .search-wrapper {
+                margin: 0 10px;
+            }
+            
+            .search-input {
+                padding-left: 35px; /* Tighter padding */
+            }
+
+            /* 5. Adjust Video Cards for Mobile */
+            .video-card {
+                padding: 12px;
+                background-color: transparent; /* Clean look */
+                border-bottom: 1px solid #1a1a1a;
+            }
+            
+            .thumb-wrapper {
+                min-width: 120px;
+                height: 68px;
+            }
+
+            /* 6. Player Adjustments */
+            .content-width {
+                padding: 20px 15px; /* Less padding on sides */
+            }
+
+            .details-title {
+                font-size: 1.2rem; /* Smaller title */
+            }
+
+            .player-wrapper {
+                border-radius: 8px; /* Smaller corners */
+            }
+            
+            /* Hide the placeholder on mobile to save space */
+            #placeholder {
+                display: none; 
+            }
+            
+            /* Make sure player area is visible if a video is loaded */
+            #player-area:has(iframe[src=""]) {
+                display: none;
+            }
+        }
+
     </style>
 </head>
 <body>
