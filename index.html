@@ -272,23 +272,45 @@
             const query = input.value;
             if(!query) return;
 
-            // 1. Close the mobile keyboard
+            // Close keyboard
             input.blur(); 
 
             const sidebar = document.getElementById('sidebar');
-            sidebar.innerHTML = '<div style="padding:40px; text-align:center; color:#666;">Creating Feed...</div>';
+            sidebar.innerHTML = '<div style="padding:40px; text-align:center; color:#666;">Contacting YouTube...</div>';
 
             try {
+                // 1. Search Request
                 const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=id&maxResults=25&q=${encodeURIComponent(query)}&type=video&key=${API_KEY}`;
                 const searchRes = await fetch(searchUrl);
                 const searchData = await searchRes.json();
                 
+                // --- DEBUG: CHECK FOR GOOGLE ERRORS ---
+                if (searchData.error) {
+                    console.error("API Error Details:", searchData.error);
+                    sidebar.innerHTML = `
+                        <div style="padding:20px; color:#ff4444; border: 1px solid #ff4444; margin: 10px; border-radius: 8px;">
+                            <h3 style="margin-top:0"><i class="fas fa-exclamation-triangle"></i> API Error</h3>
+                            <p><strong>Code:</strong> ${searchData.error.code}</p>
+                            <p><strong>Message:</strong> ${searchData.error.message}</p>
+                            <hr style="border-color: #555">
+                            <p style="font-size: 0.9em; color: #ccc;">
+                                <strong>Common Fixes:</strong><br>
+                                • 403: Check Referrer Restrictions in Cloud Console.<br>
+                                • 403: Daily Quota Exceeded.<br>
+                                • 400: API Key is missing or invalid.
+                            </p>
+                        </div>`;
+                    return;
+                }
+                // --------------------------------------
+                
                 if(!searchData.items || searchData.items.length === 0) {
-                    sidebar.innerHTML = '<div style="padding:20px;">No results found.</div>';
+                    sidebar.innerHTML = '<div style="padding:20px;">No videos found for this topic.</div>';
                     return;
                 }
                 const videoIds = searchData.items.map(item => item.id.videoId).join(',');
 
+                // 2. Details Request
                 const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds}&key=${API_KEY}`;
                 const detailsRes = await fetch(detailsUrl);
                 const detailsData = await detailsRes.json();
@@ -297,24 +319,21 @@
                 currentIndex = -1; 
                 renderSidebar();
 
-                // --- THE SCROLL FIX ---
+                // Scroll Logic
                 if (window.innerWidth <= 900) {
-                    // On Mobile: Scroll down to the list so user sees results
-                    // We use a small timeout to ensure the DOM is ready
                     setTimeout(() => {
                         sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
                 } else {
-                    // On Desktop: Reset sidebar scroll to top
                     sidebar.scrollTop = 0;
                 }
 
             } catch (error) {
                 console.error(error);
-                sidebar.innerHTML = '<div style="padding:20px; color:red;">Connection Error.</div>';
+                sidebar.innerHTML = `<div style="padding:20px; color:red;">Network Error: ${error.message}</div>`;
             }
         }
-        
+
         function renderSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.innerHTML = '';
