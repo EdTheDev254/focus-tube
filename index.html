@@ -118,7 +118,6 @@
             border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px -10px rgba(0,0,0,0.7);
             display: none; border: 1px solid #333;
         }
-        /* Important: The div that YouTube API replaces */
         #player-api { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
         .controls-bar {
@@ -145,7 +144,18 @@
             display: flex; gap: 20px; color: var(--accent); font-size: 0.9rem; font-weight: 600;
             margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid var(--border);
         }
-        .details-desc { font-size: 1rem; line-height: 1.7; color: var(--text-muted); white-space: pre-wrap; max-width: 800px; }
+        
+        /* UPDATED CLASS FOR LONG LINKS */
+        .details-desc { 
+            font-size: 1rem; 
+            line-height: 1.7; 
+            color: var(--text-muted); 
+            white-space: pre-wrap; 
+            max-width: 100%;
+            overflow-wrap: break-word; /* The magic fix */
+            word-wrap: break-word;
+            word-break: break-word;
+        }
 
         #placeholder { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-muted); opacity: 0.5; }
         #placeholder i { font-size: 4rem; margin-bottom: 20px; opacity: 0.5; }
@@ -178,6 +188,8 @@
             
             #placeholder { display: none; }
             #player-area:has(#player-wrapper[style*="display: none"]) { display: none; }
+            
+            .details-title { font-size: 1.3rem; }
         }
     </style>
 </head>
@@ -224,7 +236,6 @@
         </main>
     </div>
 
-    <!-- YouTube Smart API -->
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
@@ -235,37 +246,27 @@
         let currentVideos = [];
         let currentIndex = -1;
         let isLooping = false;
-        let player; // The Smart Player Object
+        let player; 
 
-        // 1. Initialize Smart Player
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player-api', {
                 height: '100%',
                 width: '100%',
-                playerVars: {
-                    'playsinline': 1,
-                    'rel': 0,
-                    'modestbranding': 1
-                },
-                events: {
-                    'onStateChange': onPlayerStateChange
-                }
+                playerVars: { 'playsinline': 1, 'rel': 0, 'modestbranding': 1 },
+                events: { 'onStateChange': onPlayerStateChange }
             });
         }
 
-        // 2. Logic: What happens when video ends?
         function onPlayerStateChange(event) {
-            // State 0 means ENDED
             if (event.data === YT.PlayerState.ENDED) {
                 if (isLooping) {
-                    player.playVideo(); // Restart instantly
+                    player.playVideo(); 
                 } else {
-                    playNext(); // Auto-play next in list
+                    playNext(); 
                 }
             }
         }
 
-        // 3. Search
         async function handleSearch() {
             const query = document.getElementById('search-input').value;
             if(!query) return;
@@ -274,7 +275,6 @@
             sidebar.innerHTML = '<div style="padding:40px; text-align:center; color:#666;">Creating Feed...</div>';
 
             try {
-                // Search IDs
                 const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=id&maxResults=25&q=${encodeURIComponent(query)}&type=video&key=${API_KEY}`;
                 const searchRes = await fetch(searchUrl);
                 const searchData = await searchRes.json();
@@ -285,7 +285,6 @@
                 }
                 const videoIds = searchData.items.map(item => item.id.videoId).join(',');
 
-                // Get Details
                 const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds}&key=${API_KEY}`;
                 const detailsRes = await fetch(detailsUrl);
                 const detailsData = await detailsRes.json();
@@ -334,35 +333,29 @@
             const video = currentVideos[index];
             const vidId = video.id;
 
-            // UI Updates
             document.getElementById('placeholder').style.display = 'none';
             document.getElementById('player-wrapper').style.display = 'block';
             document.getElementById('controls-bar').style.display = 'flex';
             document.getElementById('video-details').style.display = 'block';
 
-            // Sidebar Highlight
             document.querySelectorAll('.video-card').forEach(c => c.classList.remove('active'));
             const activeCard = document.getElementById(`card-${index}`);
             if(activeCard) {
                 activeCard.classList.add('active');
-                // Only scroll sidebar if on Desktop
                 if (window.innerWidth > 900) {
                     activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
 
-            // Info Populate
             document.getElementById('d-title').innerText = video.snippet.title;
             document.getElementById('d-views').innerText = parseInt(video.statistics.viewCount).toLocaleString() + " views";
             document.getElementById('d-date').innerText = new Date(video.snippet.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('d-desc').innerText = video.snippet.description;
 
-            // Load via Smart API
             if (player && player.loadVideoById) {
                 player.loadVideoById(vidId);
             }
 
-            // Scroll Fix
             if (window.innerWidth <= 900) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
@@ -370,7 +363,6 @@
             }
         }
 
-        // 4. Toggle Loop (Silent)
         function toggleLoop() {
             isLooping = !isLooping;
             const btn = document.getElementById('loop-btn');
@@ -380,7 +372,6 @@
             } else {
                 btn.classList.remove('loop-active');
             }
-            // Note: We do NOT reload the video. Logic is handled in onPlayerStateChange.
         }
 
         function playNext() { loadVideoByIndex(currentIndex + 1); }
@@ -394,7 +385,6 @@
             if (e.key === 'Enter') handleSearch();
         });
 
-        // Auto Load
         window.onload = () => {
              document.getElementById('search-input').value = "Cyberpunk City Ambience";
              handleSearch();
