@@ -522,27 +522,32 @@
             const video = currentVideos[index];
             const vidId = video.id;
 
-            // Hide Placeholder, Show Content
+            // 1. UI Updates (Show Player, Hide Placeholder)
             document.getElementById('placeholder').style.display = 'none';
             document.getElementById('player-wrapper').style.display = 'block';
-            document.getElementById('controls-bar').style.display = 'flex'; // Flex to align items
+            document.getElementById('controls-bar').style.display = 'flex';
             document.getElementById('video-details').style.display = 'block';
 
-            // Sidebar Highlight Logic
+            // 2. Highlight the Card in the List
             document.querySelectorAll('.video-card').forEach(c => c.classList.remove('active'));
             const activeCard = document.getElementById(`card-${index}`);
             if(activeCard) {
                 activeCard.classList.add('active');
-                activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Only scroll sidebar if we are on Desktop (to avoid fighting the window scroll on mobile)
+                if (window.innerWidth > 900) {
+                    activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
 
-            // Populate Info
+            // 3. Populate Video Details
             document.getElementById('d-title').innerText = video.snippet.title;
             document.getElementById('d-views').innerText = parseInt(video.statistics.viewCount).toLocaleString() + " views";
-            document.getElementById('d-date').innerText = new Date(video.snippet.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+            // Safety check for date formatting
+            const dateStr = video.snippet.publishedAt ? new Date(video.snippet.publishedAt).toLocaleDateString() : "";
+            document.getElementById('d-date').innerText = dateStr;
             document.getElementById('d-desc').innerText = video.snippet.description;
 
-            // Player Logic (Standard Embed for Local File Compatibility)
+            // 4. Update the Player (Iframe)
             const iframe = document.getElementById('main-player');
             let srcUrl = `https://www.youtube.com/embed/${vidId}?autoplay=1&modestbranding=1&rel=0`;
             if (isLooping) {
@@ -550,8 +555,14 @@
             }
             iframe.src = srcUrl;
             
-            // Scroll main area to top slightly smoothly
-            document.getElementById('player-area').scrollTo({ top: 0, behavior: 'smooth' });
+            // 5. THE FIX: Scroll to Top Logic
+            if (window.innerWidth <= 900) {
+                // Mobile: Scroll the actual Window to the top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                // Desktop: Scroll the player container
+                document.getElementById('player-area').scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
 
         function toggleLoop() {
